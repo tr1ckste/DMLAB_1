@@ -9,8 +9,8 @@ const RADIUS = 200;
 const N = 10;
 const R = 10;
 const PI = Math.PI;
-const FOCUS = false;
-
+const FOCUS = true;
+const ARROW_SIZE = 10;
 
 let degrees = 360 / N;
 let peaks = [];
@@ -60,7 +60,7 @@ const definePeaks = () => {
       y,
       connectedTo: [],
     })
-    peak(x, y, name);
+    peak( x, y, name );
     degree += degrees;
     name++;
   }
@@ -88,15 +88,15 @@ const drawConnection = () => {
         let sY = peaks[i].y;
         let fX = peaks[index].x;
         let fY = peaks[index].y;
-        let [subX, subY] = findSubs(sX, sY, fX, fY);
-        [sX, sY, fX, fY] = changeCoords(sX, sY, fX, fY, subX, subY);
+        let [subX, subY] = findSubs( sX, sY, fX, fY );
+        [sX, sY, fX, fY] = changeCoords( sX, sY, fX, fY, subX, subY );
         drLine(sX, sY, fX, fY);
       }
     }
   }
 }
 
-const findSubs = (startX, startY, finishX, finishY) => {
+const findSubs = ( startX, startY, finishX, finishY ) => {
   let x = Math.abs(finishX - startX);
   let y = Math.abs(finishY - startY);
   let subX;
@@ -108,13 +108,13 @@ const findSubs = (startX, startY, finishX, finishY) => {
   }
   else {
     proportion = Math.floor((x / y) * 100) / 100;
-    subY = R * Math.sqrt(1 / ( 1 + square(proportion) ) );
+    subY = R * Math.sqrt( 1 / ( 1 + square(proportion) ) );
     subX = subY * proportion;
   }
-    return [subX, subY];
+  return [subX, subY];
 }
 
-const changeCoords = (startX, startY, finishX, finishY, subX, subY) => {
+const changeCoords = ( startX, startY, finishX, finishY, subX, subY ) => {
   if ( startX > finishX ) {
     startX -= subX;
     finishX += subX;
@@ -132,12 +132,61 @@ const changeCoords = (startX, startY, finishX, finishY, subX, subY) => {
   return [startX, startY, finishX, finishY];
 }
 
-const drLine = ( startX, startY, finishX, finishY) => {
+
+
+const drLine = ( startX, startY, finishX, finishY ) => {
   ctx.beginPath();
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(finishX, finishY);
-  ctx.closePath();
+  ctx.moveTo( startX, startY );
+  ctx.lineTo( finishX, finishY );
   ctx.stroke();
+  ctx.closePath();
+  if (FOCUS) {
+    const [ arrLx, arrLy, arrRx, arrRy ] = findArrow( startX, startY, finishX, finishY );
+    ctx.beginPath();
+    ctx.lineTo( arrLx, arrLy );
+    ctx.lineTo( arrRx, arrRy );
+    ctx.lineTo( finishX, finishY );
+    ctx.fill();
+    ctx.closePath();
+  } else {
+    ctx.closePath();
+    ctx.stroke();  
+  }
 }
 
+const findArrow = ( startX, startY, finishX, finishY ) => {
+  const X = finishX - startX;
+  const Y = finishY - startY;
+  const L = Math.sqrt( square(X) + square(Y) );
+  const x = L - ARROW_SIZE;
+  const lambda = x / ARROW_SIZE;
+  const xH = ( startX + lambda * finishX ) / ( 1 + lambda );
+  const yH = ( startY + lambda * finishY ) / ( 1 + lambda );
+  const A = square(Y) / square(X) + 1;
+  const B = -( 2 * Y * xH / X ) - 
+             ( 2 * square(Y) * yH / square(X) ) + 
+             ( 2 * Y * xH / X ) - 2 * yH;
+  const C = 2 * square(xH) + 
+            square(Y * yH / X) +
+            2 * Y * xH * yH / X -
+            2 * square(xH) -
+            2 * Y * yH * xH / X + 
+            square(yH) - 25;
+  const [ arrLy, arrRy ] = quadraticEquation( A, B, C );
+  const arrLx = ( X * xH + Y * yH - Y * arrLy ) / X;
+  const arrRx = ( X * xH + Y * yH - Y * arrRy ) / X;
+  console.log({ startX, startY, finishX, finishY, arrLx, arrLy, arrRx, arrRy })
+  return [ arrLx, arrLy, arrRx, arrRy ];
+}
+
+const quadraticEquation = (A, B, C) => {
+  const D = square(B) - 4 * A * C;
+  let x1 = ( -B - Math.sqrt(D) ) / ( 2 * A );
+  let x2 = ( -B + Math.sqrt(D) ) / ( 2 * A );
+  return [x1, x2];
+}
+
+console.log(quadraticEquation(1, -8, 16));
+
 drawConnection();
+
