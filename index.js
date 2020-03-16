@@ -171,7 +171,7 @@ const findArrow = ( startX, startY, finishX, finishY ) => {
             2 * Y * xH * yH / X -
             2 * square(xH) -
             2 * Y * yH * xH / X + 
-            square(yH) - 25;
+            square(yH) - square(ARROW_SIZE / 2);
   const [ arrLy, arrRy ] = quadraticEquation( A, B, C );
   const arrLx = ( X * xH + Y * yH - Y * arrLy ) / X;
   const arrRx = ( X * xH + Y * yH - Y * arrRy ) / X;
