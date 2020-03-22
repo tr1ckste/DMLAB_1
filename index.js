@@ -10,7 +10,7 @@ const N = 10;
 const R = 10;
 const PI = Math.PI;
 const FOCUS = true;
-const ARROW_SIZE = 10;
+const ARROW_SIZE = 12;
 
 let degrees = 360 / N;
 let peaks = [];
@@ -59,6 +59,7 @@ const definePeaks = () => {
       x,
       y,
       connectedTo: [],
+      rad: degree * PI / 180,
     })
     peak( x, y, name );
     degree += degrees;
@@ -76,13 +77,12 @@ const connectPeaks = () => {
 
 definePeaks();
 connectPeaks();
-console.log(peaks[9].connectedTo);
 
 const drawConnection = () => {
   for (let i = 0; i < N; i++) {
     for (let index of peaks[i].connectedTo) {
       if (index === i) {
-        
+        drTail(i);
       } else {
         let sX = peaks[i].x;
         let sY = peaks[i].y;
@@ -94,6 +94,13 @@ const drawConnection = () => {
       }
     }
   }
+}
+
+const drTail = i => {
+  const rad = peaks[i].rad;
+  let xT = CENTER_X + Math.sin(rad) * ( RADIUS + 2 * R );
+  let yT = CENTER_Y - Math.cos(rad) * ( RADIUS + 2 * R );
+  circle(xT, yT);
 }
 
 const findSubs = ( startX, startY, finishX, finishY ) => {
@@ -132,8 +139,6 @@ const changeCoords = ( startX, startY, finishX, finishY, subX, subY ) => {
   return [startX, startY, finishX, finishY];
 }
 
-
-
 const drLine = ( startX, startY, finishX, finishY ) => {
   ctx.beginPath();
   ctx.moveTo( startX, startY );
@@ -157,6 +162,21 @@ const drLine = ( startX, startY, finishX, finishY ) => {
 const findArrow = ( startX, startY, finishX, finishY ) => {
   const X = finishX - startX;
   const Y = finishY - startY;
+  let arrLx, arrLy, arrRx, arrRy; 
+  if (X === 0) {
+    if ( finishY > startY ) {
+      arrLy = finishY - ARROW_SIZE;
+      arrRy = arrLy;
+      arrLx = finishX - ARROW_SIZE / 2.7;
+      arrRx = finishX + ARROW_SIZE / 2.7;
+    } else {
+      arrLy = finishY + ARROW_SIZE;
+      arrRy = arrLy;
+      arrLx = finishX + ARROW_SIZE / 2.7;
+      arrRx = finishX - ARROW_SIZE / 2.7;
+    }
+    return [ arrLx, arrLy, arrRx, arrRy ];
+  }
   const L = Math.sqrt( square(X) + square(Y) );
   const x = L - ARROW_SIZE;
   const lambda = x / ARROW_SIZE;
@@ -171,10 +191,10 @@ const findArrow = ( startX, startY, finishX, finishY ) => {
             2 * Y * xH * yH / X -
             2 * square(xH) -
             2 * Y * yH * xH / X + 
-            square(yH) - square(ARROW_SIZE / 2);
-  const [ arrLy, arrRy ] = quadraticEquation( A, B, C );
-  const arrLx = ( X * xH + Y * yH - Y * arrLy ) / X;
-  const arrRx = ( X * xH + Y * yH - Y * arrRy ) / X;
+            square(yH) - square( ARROW_SIZE / 2.7 );
+  [ arrLy, arrRy ] = quadraticEquation( A, B, C );
+  arrLx = ( X * xH + Y * yH - Y * arrLy ) / X;
+  arrRx = ( X * xH + Y * yH - Y * arrRy ) / X;
   console.log({ startX, startY, finishX, finishY, arrLx, arrLy, arrRx, arrRy })
   return [ arrLx, arrLy, arrRx, arrRy ];
 }
@@ -186,7 +206,4 @@ const quadraticEquation = (A, B, C) => {
   return [x1, x2];
 }
 
-console.log(quadraticEquation(1, -8, 16));
-
 drawConnection();
-
